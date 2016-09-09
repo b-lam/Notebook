@@ -26,7 +26,7 @@ public class Note {
         ArrayList<Note> notes = new ArrayList<Note>();
 
         for(int i = 1; i <= numNotes; i++){
-            notes.add(new Note("Title", "Content"));
+            notes.add(new Note("", ""));
         }
 
         return notes;

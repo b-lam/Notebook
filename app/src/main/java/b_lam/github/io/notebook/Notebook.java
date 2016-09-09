@@ -39,7 +39,7 @@ public class Notebook extends AppCompatActivity {
             public void onClick(View view) {
 //                Snackbar.make(view, "Hello :)", Snackbar.LENGTH_LONG)
 //                        .setAction("Action", null).show();
-                notes.add(new Note("Title", "Content"));
+                notes.add(new Note("", ""));
                 adapter.notifyItemInserted(notes.size()-1);
             }
         });
