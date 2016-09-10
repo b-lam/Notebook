@@ -8,10 +8,12 @@ import java.util.ArrayList;
 public class Note {
     private String mTitle;
     private String mContent;
+    private int mPage;
 
-    public Note(String title, String content){
+    public Note(String title, String content, int page){
         mTitle = title;
         mContent = content;
+        mPage = page;
     }
 
     public String getTitle(){
@@ -22,11 +24,15 @@ public class Note {
         return mContent;
     }
 
+    public int getPage(){
+        return mPage;
+    }
+
     public static ArrayList<Note> createNewNoteList(int numNotes){
         ArrayList<Note> notes = new ArrayList<Note>();
 
         for(int i = 1; i <= numNotes; i++){
-            notes.add(new Note("", ""));
+            notes.add(new Note("", "", 1));
         }
 
         return notes;

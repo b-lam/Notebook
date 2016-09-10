@@ -5,6 +5,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
 import java.util.List;
 
@@ -15,14 +16,16 @@ import java.util.List;
 public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
-        public TextView tvTitle;
-        public TextView tvContent;
+        public EditText etTitle;
+        public EditText etContent;
+        public TextView tvPage;
 
         public ViewHolder(View itemView){
             super(itemView);
 
-            tvTitle = (TextView) itemView.findViewById(R.id.note_title);
-            tvContent = (TextView) itemView.findViewById(R.id.note_content);
+            etTitle = (EditText) itemView.findViewById(R.id.note_title);
+            etContent = (EditText) itemView.findViewById(R.id.note_content);
+            tvPage = (TextView) itemView.findViewById(R.id.note_page);
         }
     }
 
@@ -54,11 +57,13 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
     public void onBindViewHolder(NoteAdapter.ViewHolder viewHolder, int position){
         Note note = mNote.get(position);
 
-        TextView tvTitle = viewHolder.tvTitle;
-        TextView tvContent = viewHolder.tvContent;
+        EditText etTitle = viewHolder.etTitle;
+        EditText etContent = viewHolder.etContent;
+        TextView tvPage = viewHolder.tvPage;
 
-        tvTitle.setText(note.getTitle());
-        tvContent.setText(note.getContent());
+        etTitle.setText(note.getTitle());
+        etContent.setText(note.getContent());
+        tvPage.setText(String.valueOf(note.getPage()));
     }
 
     @Override
