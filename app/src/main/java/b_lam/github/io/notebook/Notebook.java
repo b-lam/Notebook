@@ -114,7 +114,7 @@ public class Notebook extends AppCompatActivity {
                 if(pageNumber.getText().length() > 0){
                     goToPageNumber = Integer.parseInt(pageNumber.getText().toString());
                 }
-                if(goToPageNumber <= notes.size()){
+                if(goToPageNumber <= notes.size() && goToPageNumber > 0){
                     recyclerView.smoothScrollToPosition(goToPageNumber-1);
                 }else{
                     Toast.makeText(getApplicationContext(), "Please enter a valid page number", Toast.LENGTH_SHORT).show();
