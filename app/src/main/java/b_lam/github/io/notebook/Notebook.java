@@ -9,11 +9,14 @@ import android.support.v7.widget.LinearSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import java.util.ArrayList;
+
+import Helper.SimpleItemTouchHelperCallback;
 
 public class Notebook extends AppCompatActivity {
 
@@ -31,34 +34,36 @@ public class Notebook extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        final RecyclerView rvNotes = (RecyclerView) findViewById(R.id.rvNotes);
+        final RecyclerView recyclerView = (RecyclerView) findViewById(R.id.rvNotes);
 
-        notes = Note.createNewNoteList(1);
+        notes = Note.createNewNoteList(0);
 
         final NoteAdapter adapter = new NoteAdapter(this, notes);
         final LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
-        rvNotes.setAdapter(adapter);
-        rvNotes.setLayoutManager(linearLayoutManager);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(linearLayoutManager);
 
         SnapHelper snapHelper = new LinearSnapHelper();
-        snapHelper.attachToRecyclerView(rvNotes);
+        snapHelper.attachToRecyclerView(recyclerView);
 
+        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(adapter, recyclerView);
+        ItemTouchHelper touchHelper = new ItemTouchHelper(callback);
+        touchHelper.attachToRecyclerView(recyclerView);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                Snackbar.make(view, "Hello :)", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
                 notes.add(new Note("", "", notes.size()+1));
                 adapter.notifyItemInserted(notes.size()-1);
-                rvNotes.smoothScrollToPosition(notes.size()-1);
+                recyclerView.smoothScrollToPosition(notes.size()-1);
 
             }
         });
 
-        //TODO Add saving functionality
-        //TODO Add delete functionality
+        //TODO Add saving
+        //TODO Add delete
+        //TODO Add go to page
     }
 
     @Override
@@ -76,7 +81,7 @@ public class Notebook extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_go_to) {
             return true;
         }
 
