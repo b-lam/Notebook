@@ -3,6 +3,7 @@ package b_lam.github.io.notebook;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.LinearSnapHelper;
@@ -10,9 +11,13 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -21,6 +26,8 @@ import Helper.SimpleItemTouchHelperCallback;
 public class Notebook extends AppCompatActivity {
 
     ArrayList<Note> notes;
+    AlertDialog dialogBuilder;
+    RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +41,7 @@ public class Notebook extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        final RecyclerView recyclerView = (RecyclerView) findViewById(R.id.rvNotes);
+        recyclerView = (RecyclerView) findViewById(R.id.rvNotes);
 
         notes = Note.createNewNoteList(0);
 
@@ -62,8 +69,7 @@ public class Notebook extends AppCompatActivity {
         });
 
         //TODO Add saving
-        //TODO Add delete
-        //TODO Add go to page
+        //TODO Add updating page numbers
     }
 
     @Override
@@ -82,10 +88,42 @@ public class Notebook extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_go_to) {
+            gotoDialog();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void gotoDialog(){
+        LayoutInflater layoutInflater = LayoutInflater.from(this);
+        View gotoView = layoutInflater.inflate(R.layout.go_to_dialog_layout, null);
+
+        dialogBuilder = new AlertDialog.Builder(this).create();
+        dialogBuilder.setTitle("Enter Page Number");
+        dialogBuilder.setIcon(R.mipmap.ic_launcher);
+        dialogBuilder.setView(gotoView);
+
+        final EditText pageNumber = (EditText) gotoView.findViewById(R.id.editTextPageNumber);
+
+        Button btnGo = (Button) gotoView.findViewById(R.id.go);
+        btnGo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int goToPageNumber = 0;
+                if(pageNumber.getText().length() > 0){
+                    goToPageNumber = Integer.parseInt(pageNumber.getText().toString());
+                }
+                if(goToPageNumber <= notes.size()){
+                    recyclerView.smoothScrollToPosition(goToPageNumber-1);
+                }else{
+                    Toast.makeText(getApplicationContext(), "Please enter a valid page number", Toast.LENGTH_SHORT).show();
+                }
+                dialogBuilder.dismiss();
+            }
+        });
+
+        dialogBuilder.show();
     }
 
     @Override
