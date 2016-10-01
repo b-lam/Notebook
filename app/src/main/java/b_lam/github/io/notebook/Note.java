@@ -1,19 +1,26 @@
 package b_lam.github.io.notebook;
 
+import com.orm.SugarRecord;
+
 import java.util.ArrayList;
 
 /**
  * Created by Brandon on 5/19/2016.
  */
-public class Note {
+public class Note extends SugarRecord{
     private String mTitle;
     private String mContent;
+    private String mDate;
     private int mPage;
 
-    public Note(String title, String content, int page){
+    public Note(){
+
+    }
+
+    public Note(String title, String content, String date){
         mTitle = title;
         mContent = content;
-        mPage = page;
+        mDate = date;
     }
 
     public String getTitle(){
@@ -24,6 +31,10 @@ public class Note {
         return mContent;
     }
 
+    public String getDate(){
+        return mDate;
+    }
+
     public int getPage(){
         return mPage;
     }
@@ -32,9 +43,17 @@ public class Note {
         ArrayList<Note> notes = new ArrayList<Note>();
 
         for(int i = 1; i <= numNotes; i++){
-            notes.add(new Note("", "", 1));
+            notes.add(new Note("", "", ""));
         }
 
         return notes;
+    }
+
+    public void setTitle(String title){
+        mTitle = title;
+    }
+
+    public void setContent(String content){
+        mContent = content;
     }
 }

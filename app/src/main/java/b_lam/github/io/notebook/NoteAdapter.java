@@ -1,9 +1,10 @@
 package b_lam.github.io.notebook;
 
 import android.content.Context;
-import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,18 +26,21 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> im
     public static class ViewHolder extends RecyclerView.ViewHolder{
         public EditText etTitle;
         public EditText etContent;
-        public TextView tvPage;
+        public TextView tvDate;
 
         public ViewHolder(View itemView){
             super(itemView);
 
             etTitle = (EditText) itemView.findViewById(R.id.note_title);
             etContent = (EditText) itemView.findViewById(R.id.note_content);
-            tvPage = (TextView) itemView.findViewById(R.id.note_page);
+            tvDate = (TextView) itemView.findViewById(R.id.note_date);
+
+            etTitle.addTextChangedListener(textWatcher);
+            etContent.addTextChangedListener(textWatcher);
         }
     }
 
-    private List<Note> mNotes;
+    private static List<Note> mNotes;
     private Context mContext;
     private List<Note> mNotesToDelete = new ArrayList<>();
 
@@ -67,11 +71,11 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> im
 
         EditText etTitle = viewHolder.etTitle;
         EditText etContent = viewHolder.etContent;
-        TextView tvPage = viewHolder.tvPage;
+        TextView tvPage = viewHolder.tvDate;
 
         etTitle.setText(note.getTitle());
         etContent.setText(note.getContent());
-        tvPage.setText(String.valueOf(note.getPage()));
+        tvPage.setText(note.getDate());
     }
 
     @Override
@@ -110,4 +114,20 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> im
         notifyItemMoved(fromPosition, toPosition);
         return true;
     }
+
+    private final static TextWatcher textWatcher = new TextWatcher() {
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+        }
+
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+        }
+
+        public void afterTextChanged(Editable s) {
+            if (s.length() > 0) {
+                System.out.println("Changed: " + s.toString());
+            } else{
+            }
+        }
+    };
 }

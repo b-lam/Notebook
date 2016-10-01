@@ -1,5 +1,7 @@
 package b_lam.github.io.notebook;
 
+import android.content.DialogInterface;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -11,30 +13,39 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.NumberPicker;
 import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import Helper.SimpleItemTouchHelperCallback;
+import biz.kasual.materialnumberpicker.MaterialNumberPicker;
 
 public class Notebook extends AppCompatActivity {
 
     ArrayList<Note> notes;
-    AlertDialog dialogBuilder;
     RecyclerView recyclerView;
+    NoteAdapter adapter;
+    LinearLayoutManager linearLayoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         if(savedInstanceState != null){
-
+            System.out.print("I'm back");
+        }else{
+            notes = Note.createNewNoteList(0);
         }
 
         setContentView(R.layout.activity_notebook);
@@ -43,10 +54,9 @@ public class Notebook extends AppCompatActivity {
 
         recyclerView = (RecyclerView) findViewById(R.id.rvNotes);
 
-        notes = Note.createNewNoteList(0);
 
-        final NoteAdapter adapter = new NoteAdapter(this, notes);
-        final LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        adapter = new NoteAdapter(this, notes);
+        linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(linearLayoutManager);
 
@@ -61,15 +71,20 @@ public class Notebook extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                notes.add(new Note("", "", notes.size()+1));
+                Date cDate = new Date();
+                String fDate = new SimpleDateFormat("yyyy/MM/dd").format(cDate);
+                Log.d("Current Date", fDate);
+                notes.add(new Note("", "", fDate));
                 adapter.notifyItemInserted(notes.size()-1);
                 recyclerView.smoothScrollToPosition(notes.size()-1);
 
             }
         });
 
+
+
         //TODO Add saving
-        //TODO Add updating page numbers
+        //TODO Go to page by title (Scroll picker)
     }
 
     @Override
@@ -88,7 +103,11 @@ public class Notebook extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_go_to) {
-            gotoDialog();
+            if(notes.size() > 0){
+                gotoDialog();
+            }else{
+                noNotesDialog();
+            }
             return true;
         }
 
@@ -96,38 +115,66 @@ public class Notebook extends AppCompatActivity {
     }
 
     private void gotoDialog(){
-        LayoutInflater layoutInflater = LayoutInflater.from(this);
-        View gotoView = layoutInflater.inflate(R.layout.go_to_dialog_layout, null);
 
-        dialogBuilder = new AlertDialog.Builder(this).create();
-        dialogBuilder.setTitle("Enter Page Number");
-        dialogBuilder.setIcon(R.mipmap.ic_launcher);
-        dialogBuilder.setView(gotoView);
+        final MaterialNumberPicker numberPicker = new MaterialNumberPicker.Builder(this)
+                .minValue(1)
+                .maxValue(notes.size())
+                .defaultValue(1)
+                .backgroundColor(Color.WHITE)
+                .separatorColor(Color.TRANSPARENT)
+                .textColor(Color.BLACK)
+                .textSize(20)
+                .enableFocusability(false)
+                .wrapSelectorWheel(true)
+                .formatter(new NumberPicker.Formatter() {
+                    @Override
+                    public String format(int i) {
+                        if(notes.get(i-1).getTitle().length() > 0){
+                            return notes.get(i).getTitle();
+                        }else{
+                            return "Date: " + notes.get(i-1).getDate();
+                        }
+                    }
+                })
+                .build();
 
-        final EditText pageNumber = (EditText) gotoView.findViewById(R.id.editTextPageNumber);
+        new AlertDialog.Builder(this)
+                .setIcon(R.mipmap.ic_launcher)
+                .setTitle("Choose Page")
+                .setView(numberPicker)
+                .setPositiveButton("Go", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        Snackbar.make(findViewById(R.id.coordLayout), "You picked : " + numberPicker.getValue(), Snackbar.LENGTH_LONG).show();
+                        recyclerView.smoothScrollToPosition(numberPicker.getValue()-1);
+                    }
+                })
+                .show();
 
-        Button btnGo = (Button) gotoView.findViewById(R.id.go);
-        btnGo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int goToPageNumber = 0;
-                if(pageNumber.getText().length() > 0){
-                    goToPageNumber = Integer.parseInt(pageNumber.getText().toString());
-                }
-                if(goToPageNumber <= notes.size() && goToPageNumber > 0){
-                    recyclerView.smoothScrollToPosition(goToPageNumber-1);
-                }else{
-                    Toast.makeText(getApplicationContext(), "Please enter a valid page number", Toast.LENGTH_SHORT).show();
-                }
-                dialogBuilder.dismiss();
-            }
-        });
+    }
 
-        dialogBuilder.show();
+    private void noNotesDialog(){
+        new AlertDialog.Builder(this)
+                .setIcon(R.mipmap.ic_launcher)
+                .setTitle("No Pages Found")
+                .setMessage("Try creating some notes using the plus button.")
+                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.dismiss();
+                    }
+                })
+                .show();
     }
 
     @Override
     public void onSaveInstanceState(Bundle bundle){
+        super.onSaveInstanceState(bundle);
+    }
 
+    @Override
+    public void onRestoreInstanceState(Bundle bundle){
+        super.onRestoreInstanceState(bundle);
+        adapter.notifyDataSetChanged();
     }
 }
