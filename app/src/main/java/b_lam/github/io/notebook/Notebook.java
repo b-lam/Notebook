@@ -1,8 +1,11 @@
 package b_lam.github.io.notebook;
 
+import android.annotation.SuppressLint;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
@@ -24,29 +27,31 @@ import android.widget.EditText;
 import android.widget.NumberPicker;
 import android.widget.Toast;
 
+import com.orm.SugarRecord;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import Helper.SimpleItemTouchHelperCallback;
 import biz.kasual.materialnumberpicker.MaterialNumberPicker;
 
 public class Notebook extends AppCompatActivity {
 
-    ArrayList<Note> notes;
+    List<Note> notes = new ArrayList<>();
     RecyclerView recyclerView;
     NoteAdapter adapter;
     LinearLayoutManager linearLayoutManager;
+    static long initialCount;
+    static int modifyPos = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if(savedInstanceState != null){
-            System.out.print("I'm back");
-        }else{
-            notes = Note.createNewNoteList(0);
-        }
+        if (savedInstanceState != null)
+            modifyPos = savedInstanceState.getInt("modify");
 
         setContentView(R.layout.activity_notebook);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -54,14 +59,38 @@ public class Notebook extends AppCompatActivity {
 
         recyclerView = (RecyclerView) findViewById(R.id.rvNotes);
 
-
-        adapter = new NoteAdapter(this, notes);
         linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
-        recyclerView.setAdapter(adapter);
+
         recyclerView.setLayoutManager(linearLayoutManager);
 
         SnapHelper snapHelper = new LinearSnapHelper();
         snapHelper.attachToRecyclerView(recyclerView);
+
+        initialCount = Note.count(Note.class);
+
+        if(initialCount >= 0){
+
+            notes = Note.listAll(Note.class);
+
+            adapter = new NoteAdapter(Notebook.this, notes);
+            recyclerView.setAdapter(adapter);
+
+            adapter.setOnItemClickListener(new NoteAdapter.OnItemClickListener() {
+                @Override
+                public void onItemClick(View view, int position) {
+
+                    Intent i = new Intent(Notebook.this, EditActivity.class);
+                    i.putExtra("isEditing", true);
+                    i.putExtra("note_title", notes.get(position).title);
+                    i.putExtra("note_content", notes.get(position).content);
+                    i.putExtra("note_date", notes.get(position).date);
+
+                    modifyPos = position;
+
+                    startActivity(i);
+                }
+            });
+        }
 
         ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(adapter, recyclerView);
         ItemTouchHelper touchHelper = new ItemTouchHelper(callback);
@@ -71,20 +100,13 @@ public class Notebook extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Date cDate = new Date();
-                String fDate = new SimpleDateFormat("yyyy/MM/dd").format(cDate);
-                Log.d("Current Date", fDate);
-                notes.add(new Note("", "", fDate));
-                adapter.notifyItemInserted(notes.size()-1);
-                recyclerView.smoothScrollToPosition(notes.size()-1);
+                startActivity(new Intent(getApplicationContext(), EditActivity.class));
 
             }
         });
 
 
 
-        //TODO Add saving
-        //TODO Go to page by title (Scroll picker)
     }
 
     @Override
@@ -126,16 +148,6 @@ public class Notebook extends AppCompatActivity {
                 .textSize(20)
                 .enableFocusability(false)
                 .wrapSelectorWheel(true)
-                .formatter(new NumberPicker.Formatter() {
-                    @Override
-                    public String format(int i) {
-                        if(notes.get(i-1).getTitle().length() > 0){
-                            return notes.get(i).getTitle();
-                        }else{
-                            return "Date: " + notes.get(i-1).getDate();
-                        }
-                    }
-                })
                 .build();
 
         new AlertDialog.Builder(this)
@@ -145,7 +157,7 @@ public class Notebook extends AppCompatActivity {
                 .setPositiveButton("Go", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
-                        Snackbar.make(findViewById(R.id.coordLayout), "You picked : " + numberPicker.getValue(), Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(findViewById(R.id.coordLayout), "You picked page : " + numberPicker.getValue(), Snackbar.LENGTH_LONG).show();
                         recyclerView.smoothScrollToPosition(numberPicker.getValue()-1);
                     }
                 })
@@ -170,11 +182,53 @@ public class Notebook extends AppCompatActivity {
     @Override
     public void onSaveInstanceState(Bundle bundle){
         super.onSaveInstanceState(bundle);
+
+        bundle.putInt("modify", modifyPos);
     }
 
     @Override
     public void onRestoreInstanceState(Bundle bundle){
         super.onRestoreInstanceState(bundle);
-        adapter.notifyDataSetChanged();
+
+        modifyPos = bundle.getInt("modify");
+    }
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+
+        final long newCount = Note.count(Note.class);
+
+        if (newCount > initialCount) {
+            // A note is added
+            // Just load the last added note (new)
+            Note note = Note.last(Note.class);
+            notes.add(note);
+            adapter.notifyItemInserted((int) newCount);
+            initialCount = newCount;
+
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    recyclerView.smoothScrollToPosition(notes.size()-1);
+                }
+            }, 200);
+        }
+
+        if (modifyPos != -1 && notes.size() != 0) {
+            notes.set(modifyPos, Note.listAll(Note.class).get(modifyPos));
+            adapter.notifyItemChanged(modifyPos);
+        }
     }
 }

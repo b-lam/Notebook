@@ -1,6 +1,7 @@
 package b_lam.github.io.notebook;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
@@ -8,6 +9,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -21,28 +23,40 @@ import Helper.ItemTouchHelperAdapter;
 /**
  * Created by Brandon on 9/8/2016.
  */
+
 public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> implements ItemTouchHelperAdapter {
 
-    public static class ViewHolder extends RecyclerView.ViewHolder{
-        public EditText etTitle;
-        public EditText etContent;
+    OnItemClickListener clickListener;
+
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+        public TextView tvTitle;
+        public TextView tvContent;
         public TextView tvDate;
 
-        public ViewHolder(View itemView){
+        public ViewHolder(final View itemView){
             super(itemView);
 
-            etTitle = (EditText) itemView.findViewById(R.id.note_title);
-            etContent = (EditText) itemView.findViewById(R.id.note_content);
+            tvTitle = (TextView) itemView.findViewById(R.id.note_title);
+            tvContent = (TextView) itemView.findViewById(R.id.note_content);
             tvDate = (TextView) itemView.findViewById(R.id.note_date);
 
-            etTitle.addTextChangedListener(textWatcher);
-            etContent.addTextChangedListener(textWatcher);
+            itemView.setOnClickListener(this);
         }
+
+        @Override
+        public void onClick(View view){
+            clickListener.onItemClick(view, getAdapterPosition());
+        }
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(View view, int position);
     }
 
     private static List<Note> mNotes;
     private Context mContext;
     private List<Note> mNotesToDelete = new ArrayList<>();
+
 
     public NoteAdapter(Context context, List<Note> note){
         mContext = context;
@@ -69,12 +83,12 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> im
     public void onBindViewHolder(NoteAdapter.ViewHolder viewHolder, int position){
         Note note = mNotes.get(position);
 
-        EditText etTitle = viewHolder.etTitle;
-        EditText etContent = viewHolder.etContent;
+        TextView tvTitle = viewHolder.tvTitle;
+        TextView tvContent = viewHolder.tvContent;
         TextView tvPage = viewHolder.tvDate;
 
-        etTitle.setText(note.getTitle());
-        etContent.setText(note.getContent());
+        tvTitle.setText(note.getTitle());
+        tvContent.setText(note.getContent());
         tvPage.setText(note.getDate());
     }
 
@@ -86,18 +100,24 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> im
     @Override
     public void onItemDismiss(final int position, final RecyclerView recyclerView){
         final Note mNote = mNotes.get(position);
+
         Snackbar.make(recyclerView,"Note deleted", Snackbar.LENGTH_LONG).setAction("UNDO", new View.OnClickListener(){
             @Override
             public void onClick(View view){
                 mNotes.add(position, mNote);
                 notifyItemInserted(position);
                 recyclerView.scrollToPosition(position);
+                mNote.save();
                 mNotesToDelete.remove(mNote);
+                Notebook.initialCount += 1;
             }
         }).show();
+
         mNotes.remove(position);
         notifyItemRemoved(position);
         mNotesToDelete.add(mNote);
+        mNote.delete();
+        Notebook.initialCount -= 1;
     }
 
     @Override
@@ -115,19 +135,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> im
         return true;
     }
 
-    private final static TextWatcher textWatcher = new TextWatcher() {
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-        }
-
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-        }
-
-        public void afterTextChanged(Editable s) {
-            if (s.length() > 0) {
-                System.out.println("Changed: " + s.toString());
-            } else{
-            }
-        }
-    };
+    public void setOnItemClickListener(final OnItemClickListener itemClickListener){
+        this.clickListener = itemClickListener;
+    }
 }
